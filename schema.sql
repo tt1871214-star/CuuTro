@@ -1,0 +1,210 @@
+﻿-- ====================================================================
+-- CỨU TRỢ — COMMUNITY DISASTER ALERT & RELIEF PLATFORM
+-- DATABASE SCHEMA DEFINITION (MySQL 8.0 / InnoDB / utf8mb4)
+-- ====================================================================
+
+CREATE DATABASE IF NOT EXISTS relief_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE relief_db;
+
+-- 1. ROLES
+CREATE TABLE IF NOT EXISTS roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. USERS
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    phone VARCHAR(20) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    role_id INT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 3. ZONES (PHÂN VÙNG THIÊN TAI VÀ ĐIỀU PHỐI)
+CREATE TABLE IF NOT EXISTS zones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255) DEFAULT NULL,
+    center_lat DOUBLE NOT NULL,
+    center_lng DOUBLE NOT NULL,
+    radius_km DOUBLE DEFAULT 5.0,
+    request_count INT DEFAULT 0,
+    status VARCHAR(20) DEFAULT 'YELLOW', -- YELLOW, ORANGE, RED
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. ZONE THRESHOLD CONFIG (CẤU HÌNH NGƯỠNG ĐỘNG - ADMIN QUẢN LÝ)
+CREATE TABLE IF NOT EXISTS zone_threshold_configs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    yellow_max INT NOT NULL DEFAULT 20,
+    orange_max INT NOT NULL DEFAULT 50,
+    red_min INT NOT NULL DEFAULT 50,
+    description VARCHAR(255) DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. RESCUE TEAMS (ĐỘI CỨU HỘ)
+CREATE TABLE IF NOT EXISTS rescue_teams (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    team_name VARCHAR(100) NOT NULL,
+    leader_name VARCHAR(100) NOT NULL,
+    contact_phone VARCHAR(20) NOT NULL,
+    status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, BUSY, INACTIVE
+    current_lat DOUBLE NOT NULL DEFAULT 21.0285,
+    current_lng DOUBLE NOT NULL DEFAULT 105.8542,
+    assigned_zone_id INT DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (assigned_zone_id) REFERENCES zones(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. RESCUE REQUESTS (YÊU CẦU CỨU TRỢ KHẨN CẤP)
+CREATE TABLE IF NOT EXISTS rescue_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    zone_id INT DEFAULT NULL,
+    sender_name VARCHAR(100) DEFAULT NULL,
+    sender_phone VARCHAR(20) DEFAULT NULL,
+    relief_type VARCHAR(50) DEFAULT 'CỨU NGƯỜI MẮC KẸT',
+    personal_urgency VARCHAR(30) DEFAULT 'CAO',
+    description TEXT DEFAULT NULL,
+    image_url VARCHAR(255) DEFAULT NULL,
+    latitude DOUBLE NOT NULL,
+    longitude DOUBLE NOT NULL,
+    status VARCHAR(30) DEFAULT 'PENDING', -- PENDING, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED
+    assigned_team_id INT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (zone_id) REFERENCES zones(id) ON DELETE SET NULL,
+    FOREIGN KEY (assigned_team_id) REFERENCES rescue_teams(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. RESCUE HISTORIES (LỊCH SỬ CHUYỂN ĐỔI THEO STATE MACHINE)
+CREATE TABLE IF NOT EXISTS rescue_histories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    request_id INT NOT NULL,
+    from_status VARCHAR(30) DEFAULT NULL,
+    to_status VARCHAR(30) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    notes TEXT DEFAULT NULL,
+    performed_by INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES rescue_requests(id) ON DELETE CASCADE,
+    FOREIGN KEY (performed_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. ALERTS (CẢNH BÁO THIÊN TAI & DỮ LIỆU OPEN-METEO)
+CREATE TABLE IF NOT EXISTS alerts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    disaster_type VARCHAR(50) DEFAULT 'BÃO / MƯA LŨ',
+    target_area VARCHAR(150) NOT NULL,
+    alert_level VARCHAR(20) DEFAULT 'ORANGE', -- YELLOW, ORANGE, RED
+    message TEXT NOT NULL,
+    guidelines TEXT DEFAULT NULL,
+    latitude DOUBLE DEFAULT NULL,
+    longitude DOUBLE DEFAULT NULL,
+    radius_km DOUBLE DEFAULT 15.0,
+    source VARCHAR(50) DEFAULT 'OPEN_METEO',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. ASSEMBLY POINTS & REFUGES (ĐIỂM TẬP KẾT & NƠI TRÚ ẨN)
+CREATE TABLE IF NOT EXISTS assembly_points (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    point_type VARCHAR(30) DEFAULT 'ASSEMBLY', -- ASSEMBLY, REFUGE
+    address VARCHAR(255) NOT NULL,
+    latitude DOUBLE NOT NULL,
+    longitude DOUBLE NOT NULL,
+    capacity INT DEFAULT 100,
+    current_occupancy INT DEFAULT 0,
+    contact_person VARCHAR(100) DEFAULT NULL,
+    contact_phone VARCHAR(20) DEFAULT NULL,
+    is_open BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. COMMUNITY POSTS (BẢNG TIN CỘNG ĐỒNG)
+CREATE TABLE IF NOT EXISTS community_posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    post_type VARCHAR(50) NOT NULL,
+    latitude DOUBLE NOT NULL,
+    longitude DOUBLE NOT NULL,
+    image_url VARCHAR(255) DEFAULT NULL,
+    verification_status VARCHAR(20) DEFAULT 'UNVERIFIED', -- UNVERIFIED, VERIFIED, REJECTED
+    confirm_count INT DEFAULT 0,
+    deny_count INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. COMMUNITY VERIFICATIONS (XÁC MINH TIN TRONG BÁN KÍNH 5KM)
+CREATE TABLE IF NOT EXISTS community_verifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    is_confirm BOOLEAN NOT NULL,
+    distance_km DOUBLE DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_post_user_verify (post_id, user_id),
+    FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 12. SAFE STATUSES (TÔI AN TOÀN)
+CREATE TABLE IF NOT EXISTS safe_statuses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    latitude DOUBLE NOT NULL,
+    longitude DOUBLE NOT NULL,
+    status_message VARCHAR(255) DEFAULT 'Tôi an toàn',
+    battery_level INT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 13. EMERGENCY CONTACTS (DANH BẠ KHẨN CẤP 112, 114, 115...)
+CREATE TABLE IF NOT EXISTS emergency_contacts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    description VARCHAR(200) DEFAULT NULL,
+    icon_type VARCHAR(50) DEFAULT 'phone',
+    sort_order INT DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 14. AUDIT LOGS
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    action VARCHAR(100) NOT NULL,
+    table_name VARCHAR(100) NOT NULL,
+    record_id INT DEFAULT NULL,
+    details TEXT DEFAULT NULL,
+    ip_address VARCHAR(50) DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- HIỆU NĂNG & TỐI ƯU INDEX
+CREATE INDEX idx_user_phone ON users(phone);
+CREATE INDEX idx_rescue_requests_status ON rescue_requests(status);
+CREATE INDEX idx_rescue_requests_zone ON rescue_requests(zone_id);
+CREATE INDEX idx_zones_status ON zones(status);
+CREATE INDEX idx_community_posts_coords ON community_posts(latitude, longitude);

@@ -1,0 +1,53 @@
+﻿version: "3.8"
+
+services:
+  cuutro-db:
+    image: mysql:8.0
+    container_name: cuutro_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: relief_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cuutro-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cuutro_backend
+    restart: always
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:password@cuutro-db:3306/relief_db
+      - SECRET_KEY=cuu-tro-platform-secret-key-2026-secure
+      - JWT_SECRET_KEY=jwt-super-secret-cuu-tro-platform
+      - FRONTEND_URL=http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      cuutro-db:
+        condition: service_healthy
+
+  cuutro-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cuutro_frontend
+    restart: always
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - cuutro-backend
+
+volumes:
+  mysql_data:
