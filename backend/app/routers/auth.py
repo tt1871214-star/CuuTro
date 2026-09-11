@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import verify_password, get_password_hash, create_access_token
@@ -109,7 +109,7 @@ def register_rescue_team(req: RescueTeamRegisterRequest, db: Session = Depends(g
 
 @router.post("/login", response_model=TokenResponse)
 def login(req: LoginRequest, db: Session = Depends(get_db)):
-    """Đăng nhập chung cho cả 3 vai trò: Người dân, Đội cứu hộ, Admin."""
+    """Đăng nhập dành cho Người dân (PEOPLE) và Đội cứu hộ (RESCUE_TEAM)."""
     user = db.query(User).filter(User.phone == req.phone).first()
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(
@@ -124,6 +124,13 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         )
 
     role_name = user.role.name if user.role else "PEOPLE"
+    if role_name == "ADMIN":
+        # Không tiết lộ thông tin tài khoản Admin hay đường dẫn router riêng
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Số điện thoại hoặc mật khẩu không chính xác."
+        )
+
     token = create_access_token({"sub": str(user.id), "role": role_name})
 
     return TokenResponse(
@@ -134,6 +141,45 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
             phone=user.phone,
             full_name=user.full_name,
             role=role_name,
+            is_active=user.is_active,
+            created_at=user.created_at
+        )
+    )
+
+@router.post("/admin/login", response_model=TokenResponse)
+def admin_login(req: LoginRequest, db: Session = Depends(get_db)):
+    """Đăng nhập chuyên biệt dành riêng cho Quản trị viên (Admin / Ban Chỉ Huy)."""
+    user = db.query(User).filter(User.phone == req.phone).first()
+    if not user or not verify_password(req.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Số điện thoại hoặc mật khẩu không chính xác."
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tài khoản này đã bị khóa."
+        )
+
+    role_name = user.role.name if user.role else "PEOPLE"
+    if role_name != "ADMIN":
+        # Không tiết lộ vai trò của tài khoản đối với cổng quản trị
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Số điện thoại hoặc mật khẩu không chính xác."
+        )
+
+    token = create_access_token({"sub": str(user.id), "role": "ADMIN"})
+
+    return TokenResponse(
+        access_token=token,
+        token_type="bearer",
+        user=UserResponse(
+            id=user.id,
+            phone=user.phone,
+            full_name=user.full_name,
+            role="ADMIN",
             is_active=user.is_active,
             created_at=user.created_at
         )

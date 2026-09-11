@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
@@ -26,8 +26,13 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-        window.location.href = '/login?expired=1';
+      const pathname = window.location.pathname;
+      if (!pathname.includes('/login') && !pathname.includes('/register')) {
+        if (pathname.startsWith('/admin')) {
+          window.location.href = '/admin/login?expired=1';
+        } else {
+          window.location.href = '/login?expired=1';
+        }
       }
     }
     return Promise.reject(error);

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShieldAlert, Radio, Users, Phone, LogOut, LogIn, UserPlus, Flame, Map, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -10,8 +10,13 @@ const Navbar = () => {
   const [showHotline, setShowHotline] = useState(false);
 
   const handleLogout = () => {
+    const wasAdmin = user?.role === 'ADMIN' || window.location.pathname.startsWith('/admin');
     logout();
-    navigate('/login');
+    if (wasAdmin) {
+      navigate('/admin/login');
+    } else {
+      navigate('/login');
+    }
   };
 
   const getRoleBadge = () => {

@@ -48,8 +48,8 @@ const Login = () => {
           <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-red-600 to-amber-500 flex items-center justify-center shadow-xl shadow-red-600/30">
             <ShieldAlert className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-black tracking-wide text-white">ĐĂNG NHẬP CỨU TRỢ</h2>
-          <p className="text-xs text-slate-400">Nền tảng Cảnh báo & Ứng cứu Thiên tai Cộng đồng</p>
+          <h2 className="text-2xl font-black tracking-wide text-white">ĐĂNG NHẬP CỨU HỘ & NGƯỜI DÂN</h2>
+          <p className="text-xs text-slate-400">Cổng tiếp nhận & Ứng cứu Dành cho Người dân và Lực lượng Cứu trợ</p>
         </div>
 
         {errorMsg && (
@@ -102,32 +102,25 @@ const Login = () => {
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block text-center">
             TÀI KHOẢN MẪU KHẢO SÁT (TESTING)
           </span>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => handleQuickFill('0987654321', 'citizen123')}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-center font-bold text-[11px] text-emerald-400 transition"
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-center font-bold text-xs text-emerald-400 transition"
             >
-              Người dân
+              Người dân (0987654321)
             </button>
             <button
               type="button"
               onClick={() => handleQuickFill('0912345678', 'rescue123')}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-center font-bold text-[11px] text-cyan-400 transition"
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-center font-bold text-xs text-cyan-400 transition"
             >
-              Đội cứu hộ
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('0901234567', 'admin123')}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-center font-bold text-[11px] text-purple-400 transition"
-            >
-              Admin
+              Đội cứu hộ (0912345678)
             </button>
           </div>
         </div>
 
-        <div className="text-center text-xs text-slate-400">
+        <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800/80">
           Chưa có tài khoản?{' '}
           <Link to="/register" className="font-extrabold text-red-400 hover:underline">
             Đăng ký tài khoản mới ↗

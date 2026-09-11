@@ -8,6 +8,7 @@ import FamilySafety from './pages/FamilySafety';
 import RescueTeamPortal from './pages/RescueTeamPortal';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
+import AdminLogin from './pages/AdminLogin';
 import Register from './pages/Register';
 
 // Protected Route for Rescue Teams & Admin
@@ -25,9 +26,9 @@ const RescueRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/admin/login" replace />;
   if (user.role !== 'ADMIN') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/admin/login" replace />;
   }
   return children;
 };
@@ -58,6 +59,7 @@ function App() {
             } 
           />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
