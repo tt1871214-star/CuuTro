@@ -1,4 +1,4 @@
-﻿import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -51,6 +51,25 @@ export const AuthProvider = ({ children }) => {
       return {
         success: false,
         message: err.response?.data?.detail || 'Số điện thoại hoặc mật khẩu không chính xác.'
+      };
+    }
+  };
+
+  const adminLogin = async (phone, password) => {
+    try {
+      const res = await api.post('/api/auth/admin/login', { phone, password });
+      if (res.data && res.data.access_token) {
+        const { access_token, user: userData } = res.data;
+        localStorage.setItem('token', access_token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        return { success: true, user: userData };
+      }
+      return { success: false, message: 'Đăng nhập ban chỉ huy không thành công.' };
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.detail || 'Số điện thoại hoặc mật khẩu quản trị không chính xác.'
       };
     }
   };
@@ -112,6 +131,7 @@ export const AuthProvider = ({ children }) => {
       user,
       loading,
       login,
+      adminLogin,
       registerCitizen,
       registerRescueTeam,
       logout,
