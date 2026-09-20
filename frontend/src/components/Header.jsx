@@ -11,6 +11,8 @@ const Header = () => {
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [weatherAlert, setWeatherAlert] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isAdmin = user?.role === 'ADMIN' || user?.role_name === 'Admin';
+  const isRescueTeam = user?.role === 'RESCUE_TEAM' || user?.role_name === 'RescueTeam';
 
   useEffect(() => {
     if (!user) return;
@@ -57,8 +59,9 @@ const Header = () => {
   };
 
   const handleLogout = () => {
+    const wasAdmin = isAdmin || window.location.pathname.startsWith('/admin');
     logout();
-    navigate('/login');
+    navigate(wasAdmin ? '/admin/login' : '/login');
   };
 
   return (
@@ -66,7 +69,7 @@ const Header = () => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         {/* LOGO */}
-        <Link to="/" className="flex items-center gap-2">
+        <Link to={isAdmin ? "/admin" : "/"} className="flex items-center gap-2">
           <span className="text-2xl">🚨</span>
           <span className="text-xl font-extrabold tracking-wider text-gradient font-outfit">CỨU TRỢ</span>
         </Link>
@@ -94,18 +97,20 @@ const Header = () => {
         {/* NAVIGATION & USER ACTIONS */}
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex items-center gap-5">
-            <Link to="/" className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">Bản đồ cứu trợ</Link>
-            <Link to="/community" className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">Bảng tin</Link>
-            {user && (
+            {!isAdmin && (
               <>
-                <Link to="/safe" className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">Người thân & An toàn</Link>
-                {user.role_name === 'RescueTeam' && (
-                  <Link to="/rescue" className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">Đội Cứu Hộ</Link>
-                )}
-                {user.role_name === 'Admin' && (
-                  <Link to="/admin" className="text-sm font-semibold text-red-400 hover:text-red-300 transition-colors">Quản trị</Link>
+                <Link to="/" className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">Bản đồ cứu trợ</Link>
+                <Link to="/community" className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">Bảng tin</Link>
+                {user && (
+                  <Link to="/safe" className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">Người thân & An toàn</Link>
                 )}
               </>
+            )}
+            {(isRescueTeam || isAdmin) && (
+              <Link to="/rescue" className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">Điều phối Cứu hộ</Link>
+            )}
+            {isAdmin && (
+              <Link to="/admin" className="text-sm font-semibold text-red-400 hover:text-red-300 transition-colors">Trung tâm Quản trị</Link>
             )}
           </nav>
 
@@ -206,16 +211,22 @@ const Header = () => {
       {/* MOBILE NAV MENU */}
       {mobileMenuOpen && (
         <div className="md:hidden mt-4 pt-4 border-t border-white/10 flex flex-col gap-3">
-          <Link to="/" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-300 hover:text-white py-2 block">Bản đồ cứu trợ</Link>
-          <Link to="/community" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-300 hover:text-white py-2 block">Bảng tin</Link>
+          {!isAdmin && (
+            <>
+              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-300 hover:text-white py-2 block">Bản đồ cứu trợ</Link>
+              <Link to="/community" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-300 hover:text-white py-2 block">Bảng tin</Link>
+            </>
+          )}
           {user ? (
             <>
-              <Link to="/safe" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-300 hover:text-white py-2 block">Người thân & An toàn</Link>
-              {user.role_name === 'RescueTeam' && (
-                <Link to="/rescue" onClick={() => setMobileMenuOpen(false)} className="text-sm text-cyan-400 py-2 block">Đội Cứu Hộ</Link>
+              {!isAdmin && (
+                <Link to="/safe" onClick={() => setMobileMenuOpen(false)} className="text-sm text-gray-300 hover:text-white py-2 block">Người thân & An toàn</Link>
               )}
-              {user.role_name === 'Admin' && (
-                <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="text-sm text-red-400 py-2 block">Quản trị</Link>
+              {(isRescueTeam || isAdmin) && (
+                <Link to="/rescue" onClick={() => setMobileMenuOpen(false)} className="text-sm text-cyan-400 py-2 block">Điều phối Cứu hộ</Link>
+              )}
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="text-sm text-red-400 py-2 block">Trung tâm Quản trị</Link>
               )}
               <div className="pt-2 border-t border-white/5 flex items-center justify-between">
                 <span className="text-xs font-bold text-white">{user.full_name}</span>

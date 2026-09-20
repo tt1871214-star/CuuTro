@@ -12,7 +12,7 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const { refreshTrigger, triggerManualRefresh } = useRealtime();
 
-  const [activeTab, setActiveTab] = useState('overview'); // overview, zones, users, system
+  const [activeTab, setActiveTab] = useState('overview'); // overview, zones, users, teams, system
   const [overview, setOverview] = useState(null);
   const [zones, setZones] = useState([]);
   const [thresholds, setThresholds] = useState({ yellow_max: 20, orange_max: 50, red_min: 50 });
@@ -225,7 +225,7 @@ const AdminDashboard = () => {
             activeTab === 'zones' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
           }`}
         >
-          <Sliders className="w-4 h-4 text-amber-400" /> Quản lý Zone & Cấu hình Ngưỡng (Mục 7.4)
+          <Sliders className="w-4 h-4 text-amber-400" /> Quản lý Zone & Cấu hình Ngưỡng
         </button>
         <button
           onClick={() => setActiveTab('users')}
@@ -233,7 +233,15 @@ const AdminDashboard = () => {
             activeTab === 'users' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
           }`}
         >
-          <Users className="w-4 h-4 text-cyan-400" /> Người dùng & Đội cứu hộ (Mục 7.1)
+          <Users className="w-4 h-4 text-cyan-400" /> Người dùng
+        </button>
+        <button
+          onClick={() => setActiveTab('teams')}
+          className={`px-4 py-2 rounded-xl transition flex items-center gap-2 ${
+            activeTab === 'teams' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-emerald-400" /> Đội cứu hộ
         </button>
         <button
           onClick={() => setActiveTab('system')}
@@ -498,85 +506,86 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Tab 3: Users & Teams */}
+      {/* Tab 3: Users */}
       {activeTab === 'users' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
-            <h4 className="font-extrabold text-sm text-white flex items-center gap-2">
-              <Users className="w-4 h-4 text-cyan-400" /> QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG
-            </h4>
-            <div className="overflow-x-auto max-h-[500px]">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-800/80 uppercase text-[11px] text-slate-400">
-                  <tr>
-                    <th className="p-2.5">Họ tên</th>
-                    <th className="p-2.5">Số điện thoại</th>
-                    <th className="p-2.5">Vai trò</th>
-                    <th className="p-2.5 text-center">Trạng thái</th>
-                    <th className="p-2.5 text-right">Khóa/Mở</th>
+        <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
+          <h4 className="font-extrabold text-sm text-white flex items-center gap-2">
+            <Users className="w-4 h-4 text-cyan-400" /> QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG
+          </h4>
+          <div className="overflow-x-auto max-h-[500px]">
+            <table className="w-full text-left text-xs text-slate-300">
+              <thead className="bg-slate-800/80 uppercase text-[11px] text-slate-400">
+                <tr>
+                  <th className="p-2.5">Họ tên</th>
+                  <th className="p-2.5">Số điện thoại</th>
+                  <th className="p-2.5">Vai trò</th>
+                  <th className="p-2.5 text-center">Trạng thái</th>
+                  <th className="p-2.5 text-right">Khóa/Mở</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {usersList.map(u => (
+                  <tr key={u.id}>
+                    <td className="p-2.5 font-bold text-white">{u.full_name}</td>
+                    <td className="p-2.5 font-mono">{u.phone}</td>
+                    <td className="p-2.5 font-bold text-slate-300">{u.role}</td>
+                    <td className="p-2.5 text-center">
+                      <span className={`text-[10px] font-bold ${u.is_active ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {u.is_active ? 'Hoạt động' : 'Đã khóa'}
+                      </span>
+                    </td>
+                    <td className="p-2.5 text-right">
+                      <button
+                        onClick={() => handleToggleUser(u.id)}
+                        className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300"
+                      >
+                        {u.is_active ? 'Khóa' : 'Mở'}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {usersList.map(u => (
-                    <tr key={u.id}>
-                      <td className="p-2.5 font-bold text-white">{u.full_name}</td>
-                      <td className="p-2.5 font-mono">{u.phone}</td>
-                      <td className="p-2.5 font-bold text-slate-300">{u.role}</td>
-                      <td className="p-2.5 text-center">
-                        <span className={`text-[10px] font-bold ${u.is_active ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {u.is_active ? 'Hoạt động' : 'Đã khóa'}
-                        </span>
-                      </td>
-                      <td className="p-2.5 text-right">
-                        <button
-                          onClick={() => handleToggleUser(u.id)}
-                          className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300"
-                        >
-                          {u.is_active ? 'Khóa' : 'Mở'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
-            <h4 className="font-extrabold text-sm text-white flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" /> DANH SÁCH ĐỘI CỨU HỘ TRỰC CHIẾN
-            </h4>
-            <div className="overflow-x-auto max-h-[500px]">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-800/80 uppercase text-[11px] text-slate-400">
-                  <tr>
-                    <th className="p-2.5">Tên đội</th>
-                    <th className="p-2.5">Đội trưởng</th>
-                    <th className="p-2.5">Hotline</th>
-                    <th className="p-2.5 text-center">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800">
-                  {teamsList.map(t => (
-                    <tr key={t.id}>
-                      <td className="p-2.5 font-bold text-white">{t.team_name}</td>
-                      <td className="p-2.5">{t.leader_name}</td>
-                      <td className="p-2.5 font-mono text-cyan-300">{t.contact_phone}</td>
-                      <td className="p-2.5 text-center">
-                        <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-                          {t.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* Tab 4: System & Alerts */}
+      {/* Tab 4: Rescue Teams */}
+      {activeTab === 'teams' && (
+        <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
+          <h4 className="font-extrabold text-sm text-white flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" /> DANH SÁCH ĐỘI CỨU HỘ TRỰC CHIẾN
+          </h4>
+          <div className="overflow-x-auto max-h-[500px]">
+            <table className="w-full text-left text-xs text-slate-300">
+              <thead className="bg-slate-800/80 uppercase text-[11px] text-slate-400">
+                <tr>
+                  <th className="p-2.5">Tên đội</th>
+                  <th className="p-2.5">Đội trưởng</th>
+                  <th className="p-2.5">Hotline</th>
+                  <th className="p-2.5 text-center">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {teamsList.map(t => (
+                  <tr key={t.id}>
+                    <td className="p-2.5 font-bold text-white">{t.team_name}</td>
+                    <td className="p-2.5">{t.leader_name}</td>
+                    <td className="p-2.5 font-mono text-cyan-300">{t.contact_phone}</td>
+                    <td className="p-2.5 text-center">
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+                        {t.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 5: System & Alerts */}
       {activeTab === 'system' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 text-xs">

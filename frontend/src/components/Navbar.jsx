@@ -36,7 +36,7 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
+          <Link to={isAdmin ? "/admin" : "/"} className="flex items-center gap-2.5 group">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-600 via-rose-500 to-amber-500 flex items-center justify-center shadow-lg shadow-red-600/30 group-hover:scale-105 transition-transform">
               <ShieldAlert className="w-6 h-6 text-white" />
             </div>
@@ -51,15 +51,19 @@ const Navbar = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-1 text-xs font-bold text-slate-300">
-            <Link to="/" className="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
-              <Map className="w-4 h-4 text-amber-400" /> Bản đồ cứu trợ
-            </Link>
-            <Link to="/community" className="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
-              <Radio className="w-4 h-4 text-cyan-400" /> Bảng tin thực địa
-            </Link>
-            <Link to="/safety" className="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Báo an toàn
-            </Link>
+            {!isAdmin && (
+              <>
+                <Link to="/" className="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
+                  <Map className="w-4 h-4 text-amber-400" /> Bản đồ cứu trợ
+                </Link>
+                <Link to="/community" className="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
+                  <Radio className="w-4 h-4 text-cyan-400" /> Bảng tin thực địa
+                </Link>
+                <Link to="/safety" className="px-3 py-2 rounded-xl hover:bg-slate-800 hover:text-white transition flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Báo an toàn
+                </Link>
+              </>
+            )}
             
             {/* Rescue Team Portal Link */}
             {(isRescueTeam || isAdmin) && (
@@ -78,14 +82,15 @@ const Navbar = () => {
 
           {/* Right Action Bar */}
           <div className="flex items-center gap-3">
-            {/* Hotline button */}
-            <button
-              onClick={() => setShowHotline(true)}
-              className="px-3 py-1.5 rounded-xl bg-red-600/20 border border-red-500/40 hover:bg-red-600/30 text-red-400 font-extrabold text-xs flex items-center gap-1.5 transition"
-            >
-              <Phone className="w-3.5 h-3.5 animate-bounce" />
-              <span className="hidden sm:inline">Đường dây nóng</span> 112
-            </button>
+            {!isAdmin && (
+              <button
+                onClick={() => setShowHotline(true)}
+                className="px-3 py-1.5 rounded-xl bg-red-600/20 border border-red-500/40 hover:bg-red-600/30 text-red-400 font-extrabold text-xs flex items-center gap-1.5 transition"
+              >
+                <Phone className="w-3.5 h-3.5 animate-bounce" />
+                <span className="hidden sm:inline">Đường dây nóng</span> 112
+              </button>
+            )}
 
             {/* User status */}
             {user ? (
